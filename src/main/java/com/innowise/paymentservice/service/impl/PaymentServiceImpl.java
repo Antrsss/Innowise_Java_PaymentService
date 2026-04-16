@@ -3,13 +3,13 @@ package com.innowise.paymentservice.service.impl;
 import com.innowise.paymentservice.dao.PaymentDao;
 import com.innowise.paymentservice.entity.Payment;
 import com.innowise.paymentservice.exception.PaymentDuplicateException;
-import com.innowise.paymentservice.exception.PaymentValidationException;
 import com.innowise.paymentservice.service.PaymentService;
 import com.mongodb.DuplicateKeyException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -22,6 +22,9 @@ public class PaymentServiceImpl implements PaymentService {
 
   @Override
   public Payment createPayment(Payment payment) {
+    payment.setStatus("PENDING");
+    payment.setTimestamp(LocalDateTime.now());
+
     try {
       return paymentDao.insert(payment);
     } catch (DuplicateKeyException e) {
@@ -31,36 +34,27 @@ public class PaymentServiceImpl implements PaymentService {
 
   @Override
   public List<Payment> getPaymentsByUserId(Long userId) {
-    if (userId == null) {
-      throw new PaymentValidationException("userId is null");
-    }
     return paymentDao.findByUserId(userId);
   }
 
   @Override
   public List<Payment> getPaymentsByOrderId(Long orderId) {
-    if (orderId == null) {
-      throw new PaymentValidationException("orderId is null");
-    }
     return paymentDao.findByOrderId(orderId);
   }
 
   @Override
   public List<Payment> getPaymentsByStatus(String status) {
-    if (status == null) {
-      throw new PaymentValidationException("status is null");
-    }
     return paymentDao.findByStatus(status);
   }
 
   @Override
-  public BigDecimal findPaymentsTotalSumForUserForDateRange(Long userId, LocalDateTime startDate, LocalDateTime endDate) {
-    if (userId == null || startDate == null || endDate == null) {
-      throw new PaymentValidationException("userId or startDate or endDate is null");
-    }
+  public BigDecimal findPaymentsTotalSumForUserForDateRange(Long userId, LocalDate startDate, LocalDate endDate) {
+
+    LocalDateTime startDateTime = startDate.atStartOfDay();
+    LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
 
     List<Payment> payments = paymentDao
-        .findByUserIdAndTimestampBetween(userId, startDate, endDate);
+        .findByUserIdAndTimestampBetween(userId, startDateTime, endDateTime);
 
     return payments.stream()
         .filter(p -> "COMPLETED".equals(p.getStatus()))
@@ -71,13 +65,12 @@ public class PaymentServiceImpl implements PaymentService {
 
   @Override
   public BigDecimal findPaymentsTotalSumForAllUsersForDateRange(
-      LocalDateTime startDate, LocalDateTime endDate) {
+      LocalDate startDate, LocalDate endDate) {
 
-    if (startDate == null || endDate == null) {
-      throw new PaymentValidationException("startDate or endDate is null");
-    }
+    LocalDateTime startDateTime = startDate.atStartOfDay();
+    LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
 
-    List<Payment> payments = paymentDao.findAllByDateRange(startDate, endDate);
+    List<Payment> payments = paymentDao.findAllByDateRange(startDateTime, endDateTime);
 
     return payments.stream()
         .filter(p -> "COMPLETED".equals(p.getStatus()))

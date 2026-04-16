@@ -12,7 +12,7 @@ public interface PaymentDao extends MongoRepository<Payment, Long> {
   List<Payment> findByOrderId(Long orderId);
   List<Payment> findByStatus(String status);
 
-  @Query("{ 'user_id': ?0, 'timestamp': { $gte: ?0, $lte: ?1 }, 'status': 'COMPLETED' }")
+  @Query("{ 'user_id': ?0, 'timestamp': { $gte: ?1, $lte: ?2 }, 'status': 'COMPLETED' }")
   List<Payment> findByUserIdAndTimestampBetween(Long userId, LocalDateTime start, LocalDateTime end);
 
   @Query("{ 'timestamp': { $gte: ?0, $lte: ?1 }, 'status': 'COMPLETED' }")
