@@ -1,6 +1,7 @@
 package com.innowise.paymentservice.service;
 
 import com.innowise.paymentservice.entity.Payment;
+import com.innowise.paymentservice.entity.PaymentStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -10,7 +11,7 @@ public interface PaymentService {
   Payment createPayment(Payment payment);
   List<Payment> getPaymentsByUserId(Long userId);
   List<Payment> getPaymentsByOrderId(Long orderId);
-  List<Payment> getPaymentsByStatus(String status);
+  List<Payment> getPaymentsByStatus(PaymentStatus status);
 
   BigDecimal findPaymentsTotalSumForAllUsersForDateRange(
       LocalDate startDate, LocalDate endDate);

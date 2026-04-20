@@ -28,7 +28,7 @@ public class Payment {
   private Long userId;
 
   @Indexed(name = "idx_status")
-  private String status;
+  private PaymentStatus status;
 
   @Indexed(name = "idx_timestamp")
   private LocalDateTime timestamp;

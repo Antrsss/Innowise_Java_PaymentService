@@ -2,11 +2,13 @@ package com.innowise.paymentservice.service.impl;
 
 import com.innowise.paymentservice.dao.PaymentDao;
 import com.innowise.paymentservice.entity.Payment;
+import com.innowise.paymentservice.entity.PaymentStatus;
 import com.innowise.paymentservice.exception.PaymentDuplicateException;
 import com.innowise.paymentservice.service.PaymentService;
 import com.mongodb.DuplicateKeyException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -19,10 +21,25 @@ import java.util.Objects;
 public class PaymentServiceImpl implements PaymentService {
 
   private final PaymentDao paymentDao;
+  private final WebClient randomNumberWebClient;
 
   @Override
   public Payment createPayment(Payment payment) {
-    payment.setStatus("PENDING");
+
+    Integer randomNumber = randomNumberWebClient.get()
+        .retrieve()
+        .bodyToMono(String.class)
+        .map(String::trim)
+        .map(Integer::parseInt)
+        .onErrorReturn(2)
+        .block();
+
+    if (randomNumber != null && randomNumber % 2 == 0) {
+      payment.setStatus(PaymentStatus.SUCCESS);
+    } else {
+      payment.setStatus(PaymentStatus.FAILED);
+    }
+
     payment.setTimestamp(LocalDateTime.now());
 
     try {
@@ -43,7 +60,7 @@ public class PaymentServiceImpl implements PaymentService {
   }
 
   @Override
-  public List<Payment> getPaymentsByStatus(String status) {
+  public List<Payment> getPaymentsByStatus(PaymentStatus status) {
     return paymentDao.findByStatus(status);
   }
 
@@ -57,7 +74,9 @@ public class PaymentServiceImpl implements PaymentService {
         .findByUserIdAndTimestampBetween(userId, startDateTime, endDateTime);
 
     return payments.stream()
-        .filter(p -> "COMPLETED".equals(p.getStatus()))
+        .filter(p -> PaymentStatus.SUCCESS
+            .equals(p.getStatus())
+        )
         .map(Payment::getPaymentAmount)
         .filter(Objects::nonNull)
         .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -73,7 +92,9 @@ public class PaymentServiceImpl implements PaymentService {
     List<Payment> payments = paymentDao.findAllByDateRange(startDateTime, endDateTime);
 
     return payments.stream()
-        .filter(p -> "COMPLETED".equals(p.getStatus()))
+        .filter(p -> PaymentStatus.SUCCESS
+            .equals(p.getStatus())
+        )
         .map(Payment::getPaymentAmount)
         .filter(Objects::nonNull)
         .reduce(BigDecimal.ZERO, BigDecimal::add);
