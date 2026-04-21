@@ -4,6 +4,7 @@ import com.innowise.paymentservice.dao.PaymentDao;
 import com.innowise.paymentservice.entity.Payment;
 import com.innowise.paymentservice.entity.PaymentStatus;
 import com.innowise.paymentservice.exception.PaymentDuplicateException;
+import com.innowise.paymentservice.service.PaymentProducer;
 import com.innowise.paymentservice.service.PaymentService;
 import com.mongodb.DuplicateKeyException;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ public class PaymentServiceImpl implements PaymentService {
 
   private final PaymentDao paymentDao;
   private final WebClient randomNumberWebClient;
+  private final PaymentProducer paymentProducer;
 
   @Override
   public Payment createPayment(Payment payment) {
@@ -43,7 +45,11 @@ public class PaymentServiceImpl implements PaymentService {
     payment.setTimestamp(LocalDateTime.now());
 
     try {
-      return paymentDao.insert(payment);
+      Payment savedPayment = paymentDao.insert(payment);
+      paymentProducer.sendPaymentEvent(savedPayment.getOrderId(), savedPayment.getStatus());
+
+      return savedPayment;
+
     } catch (DuplicateKeyException e) {
       throw new PaymentDuplicateException("Payment already exists");
     }
