@@ -1,6 +1,8 @@
 package com.innowise.paymentservice.entity;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
@@ -14,10 +16,12 @@ import java.time.LocalDateTime;
 @Document(collection = "payments")
 @CompoundIndex(name = "idx_user_id_timestamp", def = "{'user_id': 1, 'timestamp': -1}")
 @Getter @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class Payment {
 
   @Id
-  private Long id;
+  private String id;
 
   @Field(name = "order_id")
   @Indexed(name = "idx_order_id")

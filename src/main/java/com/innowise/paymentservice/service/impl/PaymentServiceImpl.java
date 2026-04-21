@@ -29,11 +29,12 @@ public class PaymentServiceImpl implements PaymentService {
   public Payment createPayment(Payment payment) {
 
     Integer randomNumber = randomNumberWebClient.get()
+        .uri(uriBuilder -> uriBuilder.path("/integers/").queryParam("num", 1).build())
         .retrieve()
         .bodyToMono(String.class)
         .map(String::trim)
         .map(Integer::parseInt)
-        .onErrorReturn(2)
+        .onErrorReturn(1)
         .block();
 
     if (randomNumber != null && randomNumber % 2 == 0) {
