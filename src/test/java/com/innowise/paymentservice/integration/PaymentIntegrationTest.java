@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 
@@ -28,7 +29,7 @@ class PaymentIntegrationTest extends BaseIntegrationTest {
 
   @BeforeEach
   void cleanUp() {
-    paymentDao.deleteAll();
+    paymentDao.deleteAll().block();
   }
 
   @Test
@@ -53,8 +54,9 @@ class PaymentIntegrationTest extends BaseIntegrationTest {
           assertEquals(new BigDecimal("100.00"), response.paymentAmount());
         });
 
-    Long count = paymentDao.count();
-    assertEquals(1, count);
+    StepVerifier.create(paymentDao.count())
+        .expectNext(1L)
+        .verifyComplete();
   }
 
   @Test
@@ -78,10 +80,19 @@ class PaymentIntegrationTest extends BaseIntegrationTest {
 
   @Test
   void getPaymentsByUserId_ShouldReturnList() {
+    PaymentDto request = new PaymentDto(1L, 99L, new BigDecimal("10.00"));
+
+    webTestClient.post()
+        .uri("/api/payments")
+        .bodyValue(request)
+        .exchange()
+        .expectStatus().isCreated();
+
     webTestClient.get()
-        .uri("/api/payments/user/{userId}", 1L)
+        .uri("/api/payments/user/{userId}", 99L)
         .exchange()
         .expectStatus().isOk()
-        .expectBodyList(PaymentResponseDto.class);
+        .expectBodyList(PaymentResponseDto.class)
+        .hasSize(1);
   }
 }
