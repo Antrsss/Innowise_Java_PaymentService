@@ -1,0 +1,24 @@
+package com.innowise.paymentservice;
+
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.context.annotation.Bean;
+import org.testcontainers.kafka.KafkaContainer;
+import org.testcontainers.mongodb.MongoDBContainer;
+import org.testcontainers.utility.DockerImageName;
+
+@TestConfiguration(proxyBeanMethods = false)
+public class TestcontainersConfiguration {
+
+  @Bean
+  @ServiceConnection
+  public KafkaContainer kafkaContainer() {
+    return new KafkaContainer(DockerImageName.parse("apache/kafka-native:latest"));
+  }
+
+  @Bean
+  @ServiceConnection
+  public MongoDBContainer mongoDBContainer() {
+    return new MongoDBContainer(DockerImageName.parse("mongo:latest"));
+  }
+}
